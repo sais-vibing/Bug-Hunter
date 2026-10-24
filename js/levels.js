@@ -778,29 +778,45 @@ export function getCurriculumForTopic(topic = '') {
 export function normalizeLevels(rawLevels, topicName = 'Custom Pathway') {
     const baseCurriculum = getCurriculumForTopic(topicName);
     if (!Array.isArray(rawLevels) || rawLevels.length === 0) {
-        return baseCurriculum;
+        return [...baseCurriculum];
     }
 
     const normalized = [];
     for (let i = 1; i <= 30; i++) {
-        const raw = rawLevels[i - 1] || baseCurriculum[i - 1];
+        const base = baseCurriculum[i - 1];
+        const raw = rawLevels[i - 1];
+
+        // If Ollama didn't return this level, use hardcoded
+        if (!raw || !raw.buggy_code || !raw.correct_answer) {
+            normalized.push({ ...base });
+            continue;
+        }
+
         const diff = getDifficultyForLevel(i);
         const isBoss = diff === 'hard';
         const isTyping = isBoss || i % 4 === 0;
+        const correctAnswer = String(raw.correct_answer).trim();
+
+        // Validate options: must be array of 3+ AND must contain the correct answer
+        let options = base.options;
+        if (Array.isArray(raw.options) && raw.options.length >= 3) {
+            const hasCorrect = raw.options.some(o => String(o).trim() === correctAnswer);
+            if (hasCorrect) {
+                options = raw.options.slice(0, 3);
+            }
+        }
 
         normalized.push({
             level: i,
             difficulty: diff,
             mode: raw.mode || (isTyping ? 'typing' : 'mcq'),
-            title: raw.title || `Level ${i}: ${topicName} Trial`,
-            prompt: raw.prompt || (isBoss ? 'BOSS LEVEL! Expose and eliminate the flaw!' : 'Solve the code puzzle:'),
-            buggy_code: raw.buggy_code || baseCurriculum[i - 1].buggy_code,
-            correct_answer: String(raw.correct_answer || baseCurriculum[i - 1].correct_answer).trim(),
-            options: Array.isArray(raw.options) && raw.options.length >= 3 
-                ? raw.options.slice(0, 3) 
-                : baseCurriculum[i - 1].options,
-            hint: raw.hint || baseCurriculum[i - 1].hint,
-            explanation: raw.explanation || baseCurriculum[i - 1].explanation
+            title: raw.title || base.title,
+            prompt: raw.prompt || base.prompt,
+            buggy_code: raw.buggy_code,
+            correct_answer: correctAnswer,
+            options,
+            hint: raw.hint || base.hint,
+            explanation: raw.explanation || base.explanation
         });
     }
 

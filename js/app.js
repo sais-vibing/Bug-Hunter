@@ -14,6 +14,9 @@ class AppController {
     }
 
     init() {
+        // Clear stale Ollama direct host so proxy is used instead
+        localStorage.removeItem('bughunter_ollama_host');
+
         this.cacheDom();
         this.initCanvasFX();
         combat.init();
