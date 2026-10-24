@@ -1,0 +1,20 @@
+{
+  "name": "bug-hunter",
+  "version": "1.0.0",
+  "description": "2D pixel-art educational dungeon crawler web game powered by local Ollama AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "bug-hunter",
+    "educational-game",
+    "ollama",
+    "gemma3",
+    "pixel-art",
+    "solo-leveling"
+  ],
+  "author": "Bug Hunter Team",
+  "license": "MIT"
+}

@@ -1,0 +1,269 @@
+/* System Quest Card, Syntax Highlights, MCQ Choices & Typing Countdown Timer */
+
+.quest-card-and-inputs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 24px;
+    gap: 12px;
+    background: #090e18;
+    overflow-y: auto;
+}
+
+/* 1. DIALOGUE CARD */
+.system-dialogue-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    border-radius: var(--radius-sharp);
+    padding: 10px 16px;
+    box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1);
+}
+
+.dialogue-avatar-frame {
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid var(--neon-cyan);
+    border-radius: var(--radius-sharp);
+    background: #050811;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.dialogue-avatar-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#dialogue-prompt-text {
+    flex: 1;
+    font-family: var(--font-system);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: 0.3px;
+}
+
+/* 2. SYSTEM QUEST CARD (BUG CHALLENGE) */
+.bug-challenge-card {
+    background: rgba(12, 17, 30, 0.95);
+    border: 1px solid var(--neon-cyan);
+    border-radius: var(--radius-sharp);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 240, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.challenge-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 240, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+    font-family: var(--font-pixel);
+    font-size: 0.85rem;
+    color: var(--neon-cyan);
+    letter-spacing: 1px;
+}
+
+.code-snippet-box {
+    padding: 14px 18px;
+    background: #060911;
+    font-family: var(--font-code);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: #e2e8f0;
+    overflow-x: auto;
+}
+
+#bug-code-snippet {
+    white-space: pre-wrap;
+    tab-size: 4;
+}
+
+/* Syntax Highlighting Tokens */
+.kw { color: #f43f5e; font-weight: 600; }
+.built-in { color: #38bdf8; font-weight: 600; }
+.str { color: #34d399; }
+.num { color: #fbbf24; }
+.comment { color: #64748b; font-style: italic; }
+.target-blank {
+    color: #f43f5e;
+    background: rgba(244, 63, 94, 0.2);
+    border: 1px dashed #f43f5e;
+    padding: 0 8px;
+    border-radius: 3px;
+    font-weight: 800;
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+    display: inline-block;
+    animation: targetGlowPulse 1.4s infinite alternate ease-in-out;
+}
+
+@keyframes targetGlowPulse {
+    0% { transform: scale(0.98); box-shadow: 0 0 4px rgba(244, 63, 94, 0.4); }
+    100% { transform: scale(1.08); box-shadow: 0 0 16px rgba(244, 63, 94, 0.85); border-color: #ffffff; }
+}
+
+/* 3. DYNAMIC INTERACTION AREA */
+.dynamic-interaction-area {
+    margin-top: 4px;
+}
+
+/* MODE A: MULTIPLE CHOICE BUTTONS */
+#interaction-mcq-area {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.mcq-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid #0284c7;
+    border-radius: var(--radius-sharp);
+    color: #ffffff;
+    cursor: pointer;
+    font-family: var(--font-code);
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(0, 240, 255, 0.1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+}
+
+.mcq-btn .opt-badge {
+    width: 32px;
+    height: 32px;
+    background: var(--neon-cyan);
+    color: #04060a;
+    font-family: var(--font-pixel);
+    font-size: 0.85rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.mcq-btn .opt-label {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mcq-btn:hover:not(:disabled) {
+    background: rgba(0, 240, 255, 0.18);
+    border-color: #ffffff;
+    box-shadow: var(--glow-cyan);
+    transform: translateY(-2px);
+}
+
+.mcq-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.mcq-btn.wrong-shake {
+    background: rgba(239, 68, 68, 0.35) !important;
+    border-color: var(--neon-red) !important;
+    animation: shake 0.35s ease;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+/* MODE B: TYPING INPUT WITH COUNTDOWN TIMER BAR */
+#interaction-typing-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.typing-timer-bar-wrapper {
+    position: relative;
+    width: 100%;
+    height: 12px;
+    background: #0a0e1a;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+#typing-timer-progress {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #0284c7, var(--neon-cyan));
+    box-shadow: 0 0 10px var(--neon-cyan);
+    transition: width 1s linear, background 0.3s ease;
+}
+
+#typing-timer-progress.warning {
+    background: linear-gradient(90deg, #d97706, #fbbf24);
+    box-shadow: 0 0 10px #fbbf24;
+}
+
+#typing-timer-progress.danger {
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+    box-shadow: 0 0 16px #ef4444;
+    animation: pulseTimer 0.6s infinite alternate;
+}
+
+@keyframes pulseTimer {
+    0% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.typing-timer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timer-title {
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+#typing-timer-label {
+    font-family: var(--font-pixel);
+    font-size: 0.85rem;
+    color: var(--neon-cyan);
+}
+
+.typing-control-group {
+    display: flex;
+    gap: 12px;
+}
+
+#typing-code-input {
+    flex: 1;
+    background: #060911;
+    border: 1px solid var(--neon-cyan);
+    border-radius: var(--radius-sharp);
+    padding: 12px 16px;
+    font-family: var(--font-code);
+    font-size: 1.1rem;
+    color: #ffffff;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+#typing-code-input:focus {
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+    border-color: #ffffff;
+}

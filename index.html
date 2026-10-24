@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUG HUNTER - 2D Educational RPG Dungeon Crawler</title>
+    <meta name="description" content="Bug Hunter: Master code debugging through high-octane 2D pixel-art dungeon crawler battles connected to local Ollama AI.">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/screens.css">
+    <link rel="stylesheet" href="styles/combat.css">
+    <link rel="stylesheet" href="styles/code-quest.css">
+</head>
+<body>
+    <!-- Global FX Canvas -->
+    <canvas id="global-particles-canvas"></canvas>
+
+    <div id="app-viewport">
+
+        <!-- SCREEN 1: LOADING SCREEN -->
+        <section id="loading-screen">
+            <div class="loading-art-container">
+                <div class="portal-diver-frame">
+                    <img src="assets/portal_diver_clean.png" alt="Hunter entering portal" class="portal-diver-img">
+                    <div class="portal-vortex-glow"></div>
+                </div>
+                <div class="loading-title-split">
+                    <span class="word-bug">BUG</span>
+                    <span class="word-hunter">HUNTER</span>
+                </div>
+                <div class="loading-status-track">
+                    <span class="loading-status-label">LOADING</span><span class="loading-status-dots">...</span>
+                </div>
+                <button id="loading-skip-btn" class="loading-skip-pill">SKIP [ESC]</button>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: MAIN MENU (EXACT VISUAL MATCH) -->
+        <section id="menu-screen" class="hidden">
+            <div class="menu-stage-wrapper">
+                <!-- Top Title Banner -->
+                <div class="menu-top-header">
+                    <img src="assets/title_pixel_transparent.png" alt="✦ BUG HUNTER ✦" class="menu-title-graphic">
+                </div>
+
+                <!-- Battleground Stage: Hero Left, Action Buttons Right -->
+                <div class="menu-stage-content">
+                    <div class="menu-hero-podium">
+                        <img src="assets/hero_idle.png" alt="Hunter" class="menu-hero-sprite">
+                    </div>
+
+                    <div class="menu-button-stack">
+                        <button id="btn-start-quest" class="menu-retro-btn">
+                            START QUEST
+                        </button>
+                        <button id="btn-system-config" class="menu-retro-btn">
+                            SYSTEM CONFIG
+                        </button>
+                        <button id="btn-abandon-game" class="menu-retro-btn">
+                            ABANDON GAME
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 3: AI GENERATION SCREEN (ASTA CHAT) -->
+        <section id="topic-screen" class="hidden">
+            <div class="asta-dialog-container">
+                <div class="asta-companion-row">
+                    <div class="asta-avatar-wrapper">
+                        <img src="assets/avatar_asta.png" alt="Asta" class="asta-avatar-img">
+                        <img src="assets/shadow_pet.png" alt="Shadow Pet" class="asta-pet-floater">
+                    </div>
+                    <div class="asta-speech-bubble">
+                        <div class="speech-system-tag">[SYSTEM TRANSMISSION]</div>
+                        <div class="speech-body">
+                            Recruit, what programming pathway do you wish to conquer? Enter your objective to manifest the 30-level dungeon.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="topic-input-wrapper">
+                    <input type="text" id="topic-custom-input" class="topic-input-box" placeholder="Enter topic (e.g., Python Operations, Python Basics, JavaScript)..." value="Python Operations">
+                    <button id="btn-manifest-dungeon" class="system-btn">
+                        <span>🔮</span> MANIFEST
+                    </button>
+                </div>
+
+                <div class="topic-chips-shelf">
+                    <span class="topic-chip-label">Quick Pathways:</span>
+                    <button class="topic-chip" data-topic="Python Operations">Python Operations</button>
+                    <button class="topic-chip" data-topic="Python Basics & Functions">Python Basics</button>
+                    <button class="topic-chip" data-topic="JavaScript Loops & Arrays">JS Loops</button>
+                    <button class="topic-chip" data-topic="Async/Await & Promises">Async & Promises</button>
+                    <button class="topic-chip" data-topic="SQL & Database Queries">SQL Basics</button>
+                </div>
+
+                <!-- Overlay when communicating with Ollama -->
+                <div id="topic-status-overlay" class="hidden">
+                    <div class="gate-spinner"></div>
+                    <div id="topic-status-text">Connecting to local Ollama instance...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 4: LEVEL MAP SCREEN (Candy-Crush 30 Nodes) -->
+        <section id="map-screen" class="hidden">
+            <header class="map-header-bar">
+                <div class="map-title-group">
+                    <button id="btn-map-back-menu" class="system-btn" style="padding: 6px 14px; font-size: 0.9rem;">
+                        ◀ SANCTUARY
+                    </button>
+                    <h2 class="map-title-heading">DUNGEON TRIAL PATH</h2>
+                    <span id="map-topic-badge">JAVASCRIPT LOOPS</span>
+                </div>
+                <div style="font-family: var(--font-pixel); font-size: 0.85rem; color: var(--neon-cyan);">
+                    30 GATES AWAIT
+                </div>
+            </header>
+
+            <div class="map-scroll-area">
+                <div id="map-nodes-container">
+                    <!-- 30 Dynamic candy-crush style nodes rendered here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 5: GAMEPLAY SCREEN -->
+        <section id="gameplay-screen" class="hidden">
+            <!-- Top HUD Bar -->
+            <header class="top-hud-bar">
+                <div class="hud-title-rank">
+                    <span class="hud-game-logo">✦ BUG HUNTER ✦</span>
+                    <span id="hud-rank">E-Rank</span>
+                </div>
+                <div class="hud-center-stats">
+                    <span id="hud-level">LEVEL 03 / 30</span>
+                    <div class="hud-xp-meter">
+                        <div class="xp-bar-container">
+                            <div id="hud-xp-fill"></div>
+                        </div>
+                        <span id="hud-xp-text" class="xp-label">0 XP</span>
+                    </div>
+                </div>
+                <div class="hud-right-actions">
+                    <div id="hud-hearts">
+                        <span class="heart-icon filled">❤️</span>
+                        <span class="heart-icon filled">❤️</span>
+                    </div>
+                    <button id="btn-pause-gameplay" class="hud-pause-btn">|| PAUSE</button>
+                </div>
+            </header>
+
+            <div class="gameplay-main-layout">
+                <!-- Left Sidebar Mini Level Track (Matching image 1) -->
+                <aside class="gameplay-sidebar-track">
+                    <div id="sidebar-level-nodes">
+                        <!-- Mini nodes 01-06 -->
+                    </div>
+                </aside>
+
+                <!-- Center Combat and Quest Stage -->
+                <main class="combat-and-quest-stage">
+                    <!-- Battle Arena Top Half -->
+                    <div id="battle-arena-bg" class="battle-arena-wrapper">
+                        <!-- Player Hero -->
+                        <div id="hero-sprite-container">
+                            <!-- Shadow Pet Floating near Hero -->
+                            <div id="battle-shadow-pet">
+                                <img src="assets/shadow_pet.png" alt="Shadow Pet" class="pet-img">
+                                <div id="pet-speech-bubble" class="hidden">Hint Unlocked!</div>
+                            </div>
+
+                            <img id="hero-sprite-img" src="assets/hero_idle.png" alt="Hero" class="hero-sprite idle">
+                            <div id="hero-hp-segments" class="hero-hp-bar-widget">
+                                <div class="hp-segment filled"></div>
+                                <div class="hp-segment filled"></div>
+                            </div>
+                        </div>
+
+                        <!-- Enemy Monster -->
+                        <div id="enemy-sprite-container">
+                            <img id="enemy-sprite-img" src="assets/enemy_easy.png" alt="Enemy" class="enemy-sprite idle easy">
+                            <span id="enemy-name-tag">ROGUE ASSASSIN</span>
+                            <div class="enemy-hp-bar-widget">
+                                <div id="enemy-hp-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quest Card and Dynamic Input Area (Bottom Half) -->
+                    <div class="quest-card-and-inputs">
+                        <!-- Asta Dialogue Card -->
+                        <div class="system-dialogue-card">
+                            <div class="dialogue-avatar-frame">
+                                <img id="dialogue-avatar-img" src="assets/avatar_asta.png" alt="Asta">
+                            </div>
+                            <div id="dialogue-prompt-text">The loop keeps running. Fix the update step!</div>
+                        </div>
+
+                        <!-- Central Bug Challenge Card -->
+                        <div class="bug-challenge-card">
+                            <div class="challenge-card-header">
+                                <span>&lt;/&gt;</span> BUG CHALLENGE
+                            </div>
+                            <div class="code-snippet-box">
+                                <pre><code id="bug-code-snippet">for (let i = 0; i &lt;= 5; i--) {</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Interaction Area -->
+                        <div class="dynamic-interaction-area">
+                            <!-- MODE A: Multiple Choice Buttons [A], [B], [C] -->
+                            <div id="interaction-mcq-area">
+                                <button id="mcq-opt-a" class="mcq-btn" data-value="i++">
+                                    <span class="opt-badge">A</span>
+                                    <span class="opt-label">i++</span>
+                                </button>
+                                <button id="mcq-opt-b" class="mcq-btn" data-value="i--">
+                                    <span class="opt-badge">B</span>
+                                    <span class="opt-label">i--</span>
+                                </button>
+                                <button id="mcq-opt-c" class="mcq-btn" data-value="i += 0">
+                                    <span class="opt-badge">C</span>
+                                    <span class="opt-label">i += 0</span>
+                                </button>
+                            </div>
+
+                            <!-- MODE B: Code-typing Input Box with Countdown Timer Bar -->
+                            <div id="interaction-typing-area" class="hidden">
+                                <div class="typing-timer-header">
+                                    <span class="timer-title">⏱️ SYSTEM INTEGRITY COUNTDOWN</span>
+                                    <span id="typing-timer-label">20s</span>
+                                </div>
+                                <div class="typing-timer-bar-wrapper">
+                                    <div id="typing-timer-progress"></div>
+                                </div>
+                                <div class="typing-control-group">
+                                    <input type="text" id="typing-code-input" placeholder="Type the bug fix code here..." autocomplete="off" spellcheck="false">
+                                    <button id="typing-submit-btn" class="system-btn">
+                                        <span>⚔️</span> ATTACK
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- POPUP: VICTORY EXPLANATION LETTER -->
+        <div id="victory-modal" class="system-modal-backdrop hidden">
+            <div class="explanation-letter-card victory">
+                <div class="explanation-header">
+                    <span class="explanation-title">✨ GATE CLEARED // VICTORY</span>
+                    <span id="victory-xp-earned" style="font-family: var(--font-pixel); color: var(--neon-cyan);">+100 XP</span>
+                </div>
+                <div class="explanation-body">
+                    <div class="explanation-section-title">Verified Solution:</div>
+                    <div id="victory-correct-answer" class="correct-answer-display">i++</div>
+                    <div class="explanation-section-title">Technical Breakdown:</div>
+                    <div id="victory-explanation-text" class="explanation-text-content">
+                        Decrementing i-- causes i to continually become negative, producing an infinite loop. Using i++ increments i to 6, satisfying termination.
+                    </div>
+                </div>
+                <div class="explanation-footer-actions">
+                    <button id="btn-victory-map" class="system-btn" style="font-size: 0.95rem; padding: 8px 16px;">MAP</button>
+                    <button id="btn-victory-retry" class="system-btn purple" style="font-size: 0.95rem; padding: 8px 16px;">RETRY</button>
+                    <button id="btn-victory-next" class="system-btn" style="font-size: 0.95rem; padding: 8px 16px;">NEXT GATE ➔</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- POPUP: DEFEAT EXPLANATION LETTER -->
+        <div id="defeat-modal" class="system-modal-backdrop hidden">
+            <div class="explanation-letter-card defeat">
+                <div class="explanation-header">
+                    <span class="explanation-title">💀 HUNTER DEFEATED // SYSTEM FAILURE</span>
+                </div>
+                <div class="explanation-body">
+                    <div class="explanation-section-title">Required Bug Fix:</div>
+                    <div id="defeat-correct-answer" class="correct-answer-display">i++</div>
+                    <div class="explanation-section-title">Anomaly Analysis:</div>
+                    <div id="defeat-explanation-text" class="explanation-text-content">
+                        Two consecutive errors or timeout occurred. Study the code logic to conquer this gate.
+                    </div>
+                </div>
+                <div class="explanation-footer-actions">
+                    <button id="btn-defeat-map" class="system-btn" style="font-size: 0.95rem; padding: 8px 16px;">MAP</button>
+                    <button id="btn-defeat-retry" class="system-btn danger" style="font-size: 0.95rem; padding: 8px 16px;">RETRY GATE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- POPUP: SHADOW PET HINT MODAL -->
+        <div id="hint-dialog-modal" class="system-modal-backdrop hidden">
+            <div class="explanation-letter-card" style="max-width: 500px;">
+                <div class="explanation-header">
+                    <span class="explanation-title">🔥 SHADOW PET WHISPER</span>
+                    <button id="hint-close-btn" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 1.2rem;">✖</button>
+                </div>
+                <div class="explanation-body">
+                    <div class="explanation-section-title">Asta's Spirit Hint:</div>
+                    <div id="hint-dialog-content" class="explanation-text-content" style="color: #38bdf8;">
+                        Hint message here...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: PAUSE MENU -->
+        <div id="pause-modal" class="system-modal-backdrop hidden">
+            <div class="explanation-letter-card" style="max-width: 440px; text-align: center;">
+                <div class="explanation-header">
+                    <span class="explanation-title">⏸️ QUEST PAUSED</span>
+                </div>
+                <div class="explanation-body" style="gap: 16px;">
+                    <button id="btn-resume-gameplay" class="system-btn">RESUME HUNT</button>
+                    <button id="btn-pause-to-map" class="system-btn purple">RETURN TO MAP</button>
+                    <button id="btn-pause-settings" class="system-btn">SETTINGS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: SETTINGS (SYSTEM CONFIG) -->
+        <div id="settings-modal" class="system-modal-backdrop hidden">
+            <div class="explanation-letter-card" style="max-width: 580px;">
+                <div class="explanation-header">
+                    <span class="explanation-title">⚙️ SYSTEM CONFIGURATION</span>
+                    <button id="settings-close-btn" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 1.2rem;">✖</button>
+                </div>
+                <div class="settings-form-grid">
+                    <div class="settings-field">
+                        <label for="settings-ollama-host">Ollama Server Host:</label>
+                        <input type="text" id="settings-ollama-host" class="settings-input" value="http://localhost:11434">
+                    </div>
+                    <div class="settings-field">
+                        <label for="settings-ollama-model">Ollama Target Model:</label>
+                        <input type="text" id="settings-ollama-model" class="settings-input" value="gemma3:1b">
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <button id="settings-test-btn" class="system-btn" style="font-size: 0.85rem; padding: 6px 14px;">TEST CONNECTION</button>
+                        <span id="settings-test-result"></span>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+
+                    <div class="settings-field">
+                        <label for="settings-theme-select">Visual Realm Theme:</label>
+                        <select id="settings-theme-select" class="settings-select">
+                            <option value="dark">Dark Dungeon Gate (Solo Leveling Manhwa)</option>
+                            <option value="light">Sunlit Nature Ruins (Light Theme)</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="font-family: var(--font-code); color: #94a3b8;">Synthesizer Sound Effects:</label>
+                        <input type="checkbox" id="settings-sound-toggle" checked style="width: 20px; height: 20px; accent-color: var(--neon-cyan);">
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-family: var(--font-code); font-size: 0.85rem; color: #ef4444;">Erase Hunter Progress:</span>
+                        <button id="settings-reset-data-btn" class="system-btn danger" style="font-size: 0.8rem; padding: 6px 14px;">RESET DATA</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: FINAL CELEBRATION (LEVEL 30 COMPLETE) -->
+        <section id="endgame-screen" class="hidden">
+            <div class="endgame-celebration-card">
+                <h1 class="celebration-title">👑 S-RANK HUNTER AWAKENED</h1>
+                <p class="celebration-message">
+                    "The ultimate final boss has been defeated. Congratulations!"
+                </p>
+                <div style="font-family: var(--font-pixel); font-size: 1rem; color: var(--neon-cyan);">
+                    ALL 30 GATES CONQUERED · S-RANK MONARCH STATUS
+                </div>
+                <div style="display: flex; gap: 16px; margin-top: 16px;">
+                    <button id="btn-endgame-menu" class="system-btn">RETURN TO SANCTUARY</button>
+                    <button id="btn-endgame-reset" class="system-btn purple">PRESTIGE RESTART</button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Application Script Module -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

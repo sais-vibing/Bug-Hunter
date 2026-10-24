@@ -1,0 +1,235 @@
+/* Bug Hunter Design System - Dark Fantasy Manhwa / Solo Leveling RPG Theme */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Press+Start+2P&family=Rajdhani:wght@600;700&display=swap');
+
+:root {
+    /* Color Palette: Dark Grays, Deep Blues, Glowing Neon Accents */
+    --bg-dark: #07090e;
+    --bg-surface: #0f1523;
+    --bg-card: rgba(15, 23, 42, 0.88);
+    --bg-card-border: #1e293b;
+    
+    /* Neon Accents */
+    --neon-cyan: #00f0ff;
+    --neon-blue: #38bdf8;
+    --neon-purple: #a855f7;
+    --neon-indigo: #6366f1;
+    --neon-red: #ef4444;
+    --neon-amber: #f59e0b;
+    --neon-green: #10b981;
+    
+    /* System Glow Effects */
+    --glow-cyan: 0 0 16px rgba(0, 240, 255, 0.45);
+    --glow-purple: 0 0 16px rgba(168, 85, 247, 0.45);
+    --glow-red: 0 0 18px rgba(239, 68, 68, 0.55);
+    
+    /* Typography */
+    --font-pixel: 'Press Start 2P', monospace;
+    --font-system: 'Rajdhani', sans-serif;
+    --font-code: 'JetBrains Mono', monospace;
+    
+    /* Panel Borders */
+    --border-sharp: 1px solid rgba(0, 240, 255, 0.35);
+    --border-accent: 2px solid var(--neon-cyan);
+    --border-card: 1px solid rgba(56, 189, 248, 0.25);
+    --radius-sharp: 4px;
+}
+
+[data-theme="light"] {
+    --bg-dark: #f0fdf4;
+    --bg-surface: #e2e8f0;
+    --bg-card: rgba(255, 255, 255, 0.92);
+    --bg-card-border: #cbd5e1;
+    --neon-cyan: #0284c7;
+    --neon-blue: #0369a1;
+    --neon-purple: #7c3aed;
+    --border-sharp: 1px solid rgba(2, 132, 199, 0.4);
+    --border-accent: 2px solid #0284c7;
+    --glow-cyan: 0 0 12px rgba(2, 132, 199, 0.3);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    color: #f1f5f9;
+    font-family: var(--font-system);
+    font-size: 16px;
+    letter-spacing: 0.5px;
+}
+
+/* Background Particle Canvas */
+#global-particles-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Master Viewport Container */
+#app-viewport {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at 50% 30%, #111a2e 0%, #060911 80%);
+    overflow: hidden;
+}
+
+/* Global Hidden Class */
+.hidden {
+    display: none !important;
+}
+
+/* Futuristic RPG "System" Buttons */
+.system-btn {
+    position: relative;
+    padding: 12px 28px;
+    font-family: var(--font-system);
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+    border: 1px solid var(--neon-cyan);
+    border-radius: var(--radius-sharp);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 0 8px rgba(0, 240, 255, 0.2);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.system-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 8px var(--neon-cyan);
+    transition: width 0.2s ease;
+}
+
+.system-btn:hover {
+    background: linear-gradient(180deg, rgba(0, 240, 255, 0.25) 0%, rgba(15, 23, 42, 0.95) 100%);
+    box-shadow: var(--glow-cyan), 0 4px 18px rgba(0, 0, 0, 0.8);
+    transform: translateY(-2px);
+    border-color: #ffffff;
+}
+
+.system-btn:hover::before {
+    width: 8px;
+}
+
+.system-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 240, 255, 0.3);
+}
+
+.system-btn.danger {
+    border-color: var(--neon-red);
+}
+.system-btn.danger::before {
+    background: var(--neon-red);
+    box-shadow: 0 0 8px var(--neon-red);
+}
+.system-btn.danger:hover {
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.25) 0%, rgba(15, 23, 42, 0.95) 100%);
+    box-shadow: var(--glow-red);
+}
+
+.system-btn.purple {
+    border-color: var(--neon-purple);
+}
+.system-btn.purple::before {
+    background: var(--neon-purple);
+    box-shadow: 0 0 8px var(--neon-purple);
+}
+.system-btn.purple:hover {
+    background: linear-gradient(180deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 0.95) 100%);
+    box-shadow: var(--glow-purple);
+}
+
+/* Sharp RPG System Panel */
+.system-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), var(--glow-cyan);
+    border-radius: var(--radius-sharp);
+    backdrop-filter: blur(8px);
+    position: relative;
+}
+
+.system-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: rgba(0, 240, 255, 0.08);
+    border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+    font-family: var(--font-pixel);
+    font-size: 0.85rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+}
+
+/* Pixel Art Rendering Optimization */
+img, canvas {
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Floating Damage Numbers */
+.floating-damage-number {
+    position: fixed;
+    font-family: var(--font-pixel);
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-shadow: 0 0 10px currentColor, 2px 2px 0 #000;
+    pointer-events: none;
+    z-index: 999;
+    animation: floatUpFade 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+.floating-damage-number.crit {
+    font-size: 1.5rem;
+    color: #00f0ff !important;
+    text-shadow: 0 0 16px #00f0ff, 3px 3px 0 #000;
+}
+
+@keyframes floatUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.6);
+    }
+    15% {
+        opacity: 1;
+        transform: translateY(-16px) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-70px) scale(0.9);
+    }
+}
