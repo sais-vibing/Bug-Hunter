@@ -2,10 +2,12 @@
   "name": "bug-hunter",
   "version": "1.0.0",
   "description": "2D pixel-art educational dungeon crawler web game powered by local Ollama AI",
-  "main": "server.js",
+  "type": "module",
+  "main": "server.mjs",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "test": "node --test"
   },
   "keywords": [
     "bug-hunter",

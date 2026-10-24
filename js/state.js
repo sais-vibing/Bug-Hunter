@@ -1,13 +1,13 @@
 // Game State Management System & Finite State Machine
 // Handles screen transitions, player progression, strict hardcoded answer validation, and HP penalties.
 
-import { DEFAULT_LEVELS_JS, DEFAULT_LEVELS_PYTHON } from './levels.js';
+import { DEFAULT_LEVELS_JS } from './levels.js';
 
 class GameState {
     constructor() {
         this.currentScreen = 'loading'; // 'loading' | 'menu' | 'topic' | 'map' | 'gameplay' | 'victory' | 'defeat' | 'endgame'
-        this.topic = 'Python Operations';
-        this.levels = [...DEFAULT_LEVELS_PYTHON];
+        this.topic = 'JavaScript Loops & Systems';
+        this.levels = [...DEFAULT_LEVELS_JS];
         this.currentLevelIndex = 0; // 0 to 29 (maps to levels 1 to 30)
         
         // Player progression

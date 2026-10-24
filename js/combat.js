@@ -96,15 +96,11 @@ class CombatController {
             });
         }
 
-        // Shadow Pet click (Launches fireball or toggles hint)
+        // Shadow Pet click
         if (this.dom.shadowPet) {
             this.dom.shadowPet.addEventListener('click', () => {
-                if (state.hintRevealed) {
-                    sound.playClick();
-                    this.toggleHint();
-                } else if (!this.isAnimating) {
-                    this.launchFireball();
-                }
+                sound.playClick();
+                this.toggleHint();
             });
         }
 
@@ -143,7 +139,7 @@ class CombatController {
         if (state.theme === 'light') {
             this.dom.arenaBg.style.backgroundImage = 'url("assets/bg_nature_arena.jpg")';
         } else {
-            this.dom.arenaBg.style.backgroundImage = 'url("assets/bg_dungeon_arena_custom.png")';
+            this.dom.arenaBg.style.backgroundImage = 'url("assets/bg_dungeon_arena.jpg")';
         }
 
         // Shadow Pet state
@@ -252,123 +248,50 @@ class CombatController {
         this.isAnimating = true;
         state.clearTypingTimer();
 
-        // 1. Launch blazing Fireball from Shadow Pet/Hero towards the monster!
-        this.launchFireball(() => {
-            // 2. Immediately after fireball impacts, Hero rushes in with Sword Slash finisher!
-            this.dom.heroImg.src = 'assets/hero_run.png';
-            this.dom.heroImg.className = 'hero-sprite running';
-            this.dom.heroContainer.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            this.dom.heroContainer.style.transform = 'translateX(260px)';
+        // 1. Hero runs forward
+        this.dom.heroImg.src = 'assets/hero_run.png';
+        this.dom.heroImg.className = 'hero-sprite running';
+        this.dom.heroContainer.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        this.dom.heroContainer.style.transform = 'translateX(260px)';
 
-            sound.playSwordSlash();
+        sound.playSwordSlash();
 
+        // 2. Midpoint: Hero slashes with massive cyan crescent arc!
+        setTimeout(() => {
+            this.dom.heroImg.src = 'assets/hero_attack.png';
+            this.dom.heroImg.className = 'hero-sprite attack';
+
+            const enemyRect = this.dom.enemyImg.getBoundingClientRect();
+            fx.burstSlashSparks(enemyRect.left + enemyRect.width / 2, enemyRect.top + enemyRect.height / 2, 35);
+            fx.spawnFloatingText('-100 CRIT BUG FIX!', enemyRect.left, enemyRect.top - 20, '#00f0ff', true);
+            sound.playHit();
+            sound.playCorrect();
+
+            // Enemy hit flash and HP drain
+            this.dom.enemyImg.classList.add('hit-flash');
+            this.dom.enemyHpBar.style.width = '0%';
+            fx.screenShake(document.getElementById('gameplay-screen'), 10, 300);
+
+            // 3. Return hero to idle stance
             setTimeout(() => {
-                this.dom.heroImg.src = 'assets/hero_attack.png';
-                this.dom.heroImg.className = 'hero-sprite attack';
+                this.dom.heroContainer.style.transition = 'transform 0.3s ease';
+                this.dom.heroContainer.style.transform = 'translateX(0)';
+                this.dom.heroImg.src = 'assets/hero_idle.png';
+                this.dom.heroImg.className = 'hero-sprite idle';
+                this.dom.enemyImg.classList.remove('hit-flash');
 
-                const enemyRect = this.dom.enemyImg.getBoundingClientRect();
-                fx.burstSlashSparks(enemyRect.left + enemyRect.width / 2, enemyRect.top + enemyRect.height / 2, 35);
-                sound.playHit();
-                sound.playCorrect();
-
-                // Final enemy stagger and victory transition
-                this.dom.enemyImg.classList.add('hit-flash');
-                fx.screenShake(document.getElementById('gameplay-screen'), 8, 250);
-
+                // Trigger victory state transition
                 setTimeout(() => {
-                    this.dom.heroContainer.style.transition = 'transform 0.3s ease';
-                    this.dom.heroContainer.style.transform = 'translateX(0)';
-                    this.dom.heroImg.src = 'assets/hero_idle.png';
-                    this.dom.heroImg.className = 'hero-sprite idle';
-                    this.dom.enemyImg.classList.remove('hit-flash');
-
-                    setTimeout(() => {
-                        this.isAnimating = false;
-                        const res = state.handleCorrectAnswer();
-                        if (res.isFinalBoss) {
-                            state.setScreen('endgame');
-                        } else {
-                            state.setScreen('victory');
-                        }
-                    }, 400);
-                }, 350);
-            }, 280);
-        });
-    }
-
-    launchFireball(onImpact = () => {}) {
-        const petEl = this.dom.shadowPet || this.dom.heroImg;
-        const enemyEl = this.dom.enemyImg;
-        if (!petEl || !enemyEl) {
-            onImpact();
-            return;
-        }
-
-        const petRect = petEl.getBoundingClientRect();
-        const enemyRect = enemyEl.getBoundingClientRect();
-
-        const startX = petRect.left + petRect.width / 2;
-        const startY = petRect.top + petRect.height / 2;
-        const targetX = enemyRect.left + enemyRect.width / 2;
-        const targetY = enemyRect.top + enemyRect.height / 2;
-
-        // Shadow pet glow activation
-        if (this.dom.shadowPet) {
-            this.dom.shadowPet.classList.add('glowing');
-        }
-
-        sound.playFireballLaunch();
-
-        const fireball = document.createElement('div');
-        fireball.className = 'fireball-projectile';
-        fireball.style.left = `${startX}px`;
-        fireball.style.top = `${startY}px`;
-        document.body.appendChild(fireball);
-
-        const duration = 380; // ms flight duration
-        const startTime = performance.now();
-
-        const step = (now) => {
-            const elapsed = now - startTime;
-            const progress = Math.min(1, elapsed / duration);
-            // Quadratic easing for speed
-            const ease = progress * progress;
-
-            const curX = startX + (targetX - startX) * ease;
-            const curY = startY + (targetY - startY) * ease - Math.sin(progress * Math.PI) * 40; // slight arc
-
-            fireball.style.left = `${curX}px`;
-            fireball.style.top = `${curY}px`;
-
-            // Spawn trailing fire embers
-            fx.spawnFireTrail(curX, curY, 3);
-
-            if (progress < 1) {
-                requestAnimationFrame(step);
-            } else {
-                // Impact!
-                fireball.remove();
-                if (this.dom.shadowPet) {
-                    this.dom.shadowPet.classList.remove('glowing');
-                }
-
-                sound.playFireballExplosion();
-                fx.burstFireballExplosion(targetX, targetY, 48);
-                fx.spawnFloatingText('-100 FIREBALL CRIT!', targetX - 50, targetY - 40, '#fbbf24', true);
-                fx.screenShake(document.getElementById('gameplay-screen'), 14, 380);
-
-                // Enemy reaction
-                this.dom.enemyImg.classList.add('hit-flash');
-                this.dom.enemyHpBar.style.width = '0%';
-
-                setTimeout(() => {
-                    this.dom.enemyImg.classList.remove('hit-flash');
-                    onImpact();
-                }, 220);
-            }
-        };
-
-        requestAnimationFrame(step);
+                    this.isAnimating = false;
+                    const res = state.handleCorrectAnswer();
+                    if (res.isFinalBoss) {
+                        state.setScreen('endgame');
+                    } else {
+                        state.setScreen('victory');
+                    }
+                }, 400);
+            }, 350);
+        }, 280);
     }
 
     executeEnemyCounter(clickedBtn) {
@@ -461,27 +384,25 @@ class CombatController {
 
     formatSyntaxHighlightedCode(codeStr) {
         if (!this.dom.bugCodeSnippet) return;
-
-        // Escape HTML entities first while preserving code quotes
-        const safe = String(codeStr)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-
-        // Single-pass tokenizer regex: prevents tag attributes (class="...") from ever being corrupted
-        const tokenRegex = /(\/\/.*$|#.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\?)|(\b(?:const|let|var|function|def|return|if|else|elif|for|while|await|async|try|catch|class|new|import|from|in|is|not|and|or|print|pass|lambda|yield)\b)|(\b(?:console|Promise|JSON|Number|Math|Array|Object|window|len|range|str|int|float|dict|list|set|type|max|min|abs)\b)|(\b\d+\b)/gm;
-
-        const highlighted = safe.replace(tokenRegex, (match, comment, str, blank, kw, builtin, num) => {
-            if (comment) return `<span class="comment">${comment}</span>`;
-            if (str) return `<span class="str">${str}</span>`;
-            if (blank) return `<span class="target-blank">?</span>`;
-            if (kw) return `<span class="kw">${kw}</span>`;
-            if (builtin) return `<span class="built-in">${builtin}</span>`;
-            if (num) return `<span class="num">${num}</span>`;
-            return match;
-        });
+        // Fast syntax highlighting with glowing blank indicator for '?'
+        let highlighted = this.escapeHtml(codeStr)
+            .replace(/\b(const|let|var|function|def|return|if|else|elif|for|while|await|async|try|catch|class|new|print)\b/g, '<span class="kw">$1</span>')
+            .replace(/\b(console|Promise|JSON|Number|Math|Array|Object|window)\b/g, '<span class="built-in">$1</span>')
+            .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="str">$1</span>')
+            .replace(/\b(\d+)\b/g, '<span class="num">$1</span>')
+            .replace(/(\/\/.*$|#.*$)/gm, '<span class="comment">$1</span>')
+            .replace(/(\?)/g, '<span class="target-blank">?</span>');
 
         this.dom.bugCodeSnippet.innerHTML = highlighted;
+    }
+
+    escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 }
 

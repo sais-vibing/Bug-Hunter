@@ -1,21 +1,13 @@
 // Ollama API Client for Local Gemma 3:1b Integration
-// Connects to local Ollama instance with robust proxy support and language-aware fallback.
+// Connects to local Ollama instance with robust error handling and instant local fallback.
 
-import { 
-    DEFAULT_LEVELS_JS, 
-    DEFAULT_LEVELS_PYTHON, 
-    getCurriculumForTopic, 
-    isPythonTopic, 
-    normalizeLevels, 
-    getDifficultyForLevel 
-} from './levels.js';
+import { DEFAULT_LEVELS_JS, normalizeLevels, getDifficultyForLevel } from './levels.js';
 
 class OllamaClient {
     constructor() {
-        // Prefer local dev server proxy to eliminate browser CORS blocks
-        this.host = localStorage.getItem('bughunter_ollama_host') || '/api/ollama';
+        this.host = localStorage.getItem('bughunter_ollama_host') || 'http://localhost:11434';
         this.model = localStorage.getItem('bughunter_ollama_model') || 'gemma3:1b';
-        this.timeoutMs = 12000; // 12-second timeout for responsive hackathon UX
+        this.timeoutMs = 12000; // 12-second timeout for hackathon responsiveness
     }
 
     setHost(host) {
@@ -29,72 +21,54 @@ class OllamaClient {
     }
 
     async testConnection() {
-        const hostsToTry = [this.host, '/api/ollama', 'http://127.0.0.1:11434', 'http://localhost:11434'];
-        const uniqueHosts = [...new Set(hostsToTry.filter(Boolean))];
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-        for (const targetHost of uniqueHosts) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3500);
+            const res = await fetch(`${this.host}/api/tags`, {
+                method: 'GET',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
 
-                const res = await fetch(`${targetHost}/api/tags`, {
-                    method: 'GET',
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (res.ok) {
-                    const data = await res.json();
-                    const models = (data.models || []).map(m => m.name);
-                    const hasTargetModel = models.some(m => m.includes(this.model) || m.startsWith(this.model));
-
-                    this.host = targetHost;
-                    return {
-                        online: true,
-                        models,
-                        hasTargetModel,
-                        host: this.host,
-                        currentModel: this.model
-                    };
-                }
-            } catch (err) {
-                // Continue to next host option
+            if (!res.ok) {
+                return { online: false, error: `HTTP ${res.status}: ${res.statusText}` };
             }
-        }
 
-        return {
-            online: false,
-            error: 'Ollama service offline or unreachable on proxy & port 11434',
-            host: this.host
-        };
+            const data = await res.json();
+            const models = (data.models || []).map(m => m.name);
+            const hasTargetModel = models.some(m => m.includes(this.model) || m.startsWith(this.model));
+
+            return {
+                online: true,
+                models,
+                hasTargetModel,
+                host: this.host,
+                currentModel: this.model
+            };
+        } catch (err) {
+            return {
+                online: false,
+                error: err.name === 'AbortError' ? 'Connection timed out (3s)' : err.message,
+                host: this.host
+            };
+        }
     }
 
     async generateCurriculum(topic, onStatusUpdate = () => {}) {
-        const isPython = isPythonTopic(topic);
-        const languageName = isPython ? 'PYTHON' : 'JAVASCRIPT';
-        
-        onStatusUpdate(`Transmitting quest frequency to local Ollama [${this.model}] for ${languageName}...`);
+        onStatusUpdate(`Transmitting quest frequency to local Ollama [${this.model}]...`);
 
-        const promptStyleExample = isPython 
-            ? `a = 20\nb = 10\nsum = a + b\nprint(sum)\n\n# que - what is sum?\nOptions: ["30", "20", "10"], Correct Answer: "30"`
-            : `let a = 20;\nlet b = 10;\nlet sum = a + b;\nconsole.log(sum);\n\n// que - what is sum?\nOptions: ["30", "20", "10"], Correct Answer: "30"`;
-
-        const systemPrompt = `You are the BUG HUNTER System AI. Generate an educational curriculum of 30 code debugging and question puzzle levels for the topic: "${topic}".
-
-STRICT LANGUAGE REQUIREMENT:
-The required programming language is strictly ${languageName}.
-${isPython 
-    ? `- ALL code snippets MUST be valid, readable PYTHON.
-- NEVER use JavaScript keywords like let, var, const, function, console.log.
-- Use Python print(), # comments, and snake_case.` 
-    : `- ALL code snippets MUST be valid JAVASCRIPT.`}
-
-QUESTION STYLE:
-- Make the starting levels simple, understandable arithmetic/variable operations.
-- Example Level 1:
-${promptStyleExample}
-- Gradually scale up through operations, conditions, loops, functions, lists, and dictionaries.
-- Include the question comment inside the code snippet (e.g. # que - what is ...?).
+        const systemPrompt = `You are the BUG HUNTER System AI. Generate an educational curriculum of 30 code debugging and fill-in-the-blank puzzle levels for the topic: "${topic}".
+STYLE GUIDELINES:
+- Make the starting levels approachable and clean, using fill-in-the-blank '?' or clear bug fixes.
+- For example, Level 1:
+  a = 20
+  b = 90
+  sum = a + b
+  print(?)
+  Correct Answer: "sum", Options: ["sum", "a", "b"]
+- Gradually scale up through variables, conditions, loops, functions, lists/arrays, objects, and simple algorithms across the 30 levels.
+- Keep answers and typing solutions concise and intuitive.
 
 Difficulty structure:
 - Levels 1-4: Easy fundamentals
@@ -117,11 +91,11 @@ Output ONLY a raw JSON array of 30 objects with NO markdown formatting, NO extra
     "difficulty": "easy",
     "title": "Short Level Title",
     "prompt": "Instruction for hunter",
-    "buggy_code": "code snippet with # que - question",
-    "correct_answer": "exact correct answer",
+    "buggy_code": "code snippet with ? or bug",
+    "correct_answer": "exact correct code or answer",
     "options": ["optA", "optB", "optC"],
     "hint": "helpful hint",
-    "explanation": "clear explanation"
+    "explanation": "clear explanation of the concept"
   }
 ]`;
 
@@ -129,52 +103,26 @@ Output ONLY a raw JSON array of 30 objects with NO markdown formatting, NO extra
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
-            // Fetch via proxy first with fallback to direct host
-            let response;
-            try {
-                response = await fetch(`${this.host}/api/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: this.model,
-                        prompt: systemPrompt,
-                        stream: false,
-                        format: 'json',
-                        options: {
-                            temperature: 0.2,
-                            num_predict: 2048
-                        }
-                    }),
-                    signal: controller.signal
-                });
-            } catch (fetchErr) {
-                if (this.host !== '/api/ollama') {
-                    // Try dev proxy
-                    this.host = '/api/ollama';
-                    response = await fetch('/api/ollama/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            model: this.model,
-                            prompt: systemPrompt,
-                            stream: false,
-                            format: 'json',
-                            options: {
-                                temperature: 0.2,
-                                num_predict: 2048
-                            }
-                        }),
-                        signal: controller.signal
-                    });
-                } else {
-                    throw fetchErr;
-                }
-            }
+            const response = await fetch(`${this.host}/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: this.model,
+                    prompt: systemPrompt,
+                    stream: false,
+                    format: 'json',
+                    options: {
+                        temperature: 0.2,
+                        num_predict: 2048
+                    }
+                }),
+                signal: controller.signal
+            });
 
             clearTimeout(timeoutId);
 
-            if (!response || !response.ok) {
-                throw new Error(`Ollama returned status ${response ? response.status : 'offline'}`);
+            if (!response.ok) {
+                throw new Error(`Ollama returned status ${response.status}`);
             }
 
             const data = await response.json();
@@ -199,7 +147,7 @@ Output ONLY a raw JSON array of 30 objects with NO markdown formatting, NO extra
             };
         } catch (error) {
             console.warn('[OllamaClient] Switching to Local System Vault Fallback:', error.message);
-            onStatusUpdate(`Local Ollama offline (${error.message}). Manifesting authentic ${languageName} Dungeon from System Vault...`);
+            onStatusUpdate(`Local Ollama unavailable (${error.message}). Manifesting Dungeon from System Vault...`);
             
             // Build specialized fallback levels for this topic
             const fallbackLevels = this.generateFallbackLevels(topic);
@@ -241,16 +189,19 @@ Output ONLY a raw JSON array of 30 objects with NO markdown formatting, NO extra
     }
 
     generateFallbackLevels(topic) {
-        // Pure authentic curriculum based on requested language
-        const baseCurriculum = getCurriculumForTopic(topic);
-        const isPython = isPythonTopic(topic);
-        const topicType = isPython ? 'Python' : 'JavaScript';
+        const lower = topic.toLowerCase();
+        let topicType = 'JavaScript';
+        if (lower.includes('python')) topicType = 'Python';
+        else if (lower.includes('react')) topicType = 'React';
+        else if (lower.includes('sql')) topicType = 'SQL';
+        else if (lower.includes('loop')) topicType = 'Loops & Algorithms';
 
-        return baseCurriculum.map(lvl => {
+        // Adapt existing curriculum to the requested topic
+        return DEFAULT_LEVELS_JS.map(lvl => {
             const diff = getDifficultyForLevel(lvl.level);
             return {
                 ...lvl,
-                title: lvl.title.includes(':') ? lvl.title : `${topicType}: ${lvl.title}`,
+                title: `${topicType}: ${lvl.title}`,
                 difficulty: diff
             };
         });
@@ -258,4 +209,3 @@ Output ONLY a raw JSON array of 30 objects with NO markdown formatting, NO extra
 }
 
 export const ollama = new OllamaClient();
-

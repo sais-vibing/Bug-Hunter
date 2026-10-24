@@ -30,34 +30,6 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Proxy for local Ollama to bypass browser CORS limitations
-    if (req.url.startsWith('/api/ollama/')) {
-        const ollamaPath = req.url.replace('/api/ollama', '');
-        const options = {
-            hostname: '127.0.0.1',
-            port: 11434,
-            path: ollamaPath,
-            method: req.method,
-            headers: {
-                ...req.headers,
-                host: '127.0.0.1:11434'
-            }
-        };
-
-        const proxyReq = http.request(options, (proxyRes) => {
-            res.writeHead(proxyRes.statusCode, proxyRes.headers);
-            proxyRes.pipe(res);
-        });
-
-        proxyReq.on('error', (err) => {
-            res.writeHead(502, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Ollama service offline or unreachable', details: err.message }));
-        });
-
-        req.pipe(proxyReq);
-        return;
-    }
-
     let reqPath = decodeURI(req.url.split('?')[0]);
     if (reqPath === '/' || reqPath === '') {
         reqPath = '/index.html';

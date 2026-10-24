@@ -179,48 +179,6 @@ class ParticleFX {
         }
     }
 
-    spawnFireTrail(x, y, count = 4) {
-        const colors = ['#f59e0b', '#fbbf24', '#ef4444', '#f97316', '#ffedd5'];
-        for (let i = 0; i < count; i++) {
-            const angle = Math.PI + (Math.random() - 0.5) * 1.2;
-            const speed = 1.5 + Math.random() * 3.5;
-            this.particles.push({
-                x: x + (Math.random() - 0.5) * 10,
-                y: y + (Math.random() - 0.5) * 10,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 0.5,
-                size: 3 + Math.random() * 5,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                life: 1,
-                decay: 0.05 + Math.random() * 0.04,
-                gravity: -0.05,
-                shape: 'circle',
-                glow: 14
-            });
-        }
-    }
-
-    burstFireballExplosion(x, y, count = 45) {
-        const colors = ['#f59e0b', '#fbbf24', '#f97316', '#ef4444', '#ffffff', '#ffedd5'];
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 3 + Math.random() * 9;
-            this.particles.push({
-                x,
-                y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 1.5,
-                size: 4 + Math.random() * 6,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                life: 1,
-                decay: 0.025 + Math.random() * 0.035,
-                gravity: 0.18,
-                shape: Math.random() > 0.4 ? 'circle' : 'rect',
-                glow: 16
-            });
-        }
-    }
-
     spawnFloatingText(text, x, y, color = '#00f0ff', isCrit = false) {
         const el = document.createElement('div');
         el.className = 'floating-damage-number' + (isCrit ? ' crit' : '');

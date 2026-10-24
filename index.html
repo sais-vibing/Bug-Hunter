@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles/screens.css">
     <link rel="stylesheet" href="styles/combat.css">
     <link rel="stylesheet" href="styles/code-quest.css">
+    <link rel="stylesheet" href="styles/logic.css">
 </head>
 <body>
     <!-- Global FX Canvas -->
@@ -74,13 +75,13 @@
                     <div class="asta-speech-bubble">
                         <div class="speech-system-tag">[SYSTEM TRANSMISSION]</div>
                         <div class="speech-body">
-                            Recruit, what programming pathway do you wish to conquer? Enter your objective to manifest the 30-level dungeon.
+                            Recruit, what would you like to learn? I will turn your goal into chapters and coding battles.
                         </div>
                     </div>
                 </div>
 
                 <div class="topic-input-wrapper">
-                    <input type="text" id="topic-custom-input" class="topic-input-box" placeholder="Enter topic (e.g., Python Operations, Python Basics, JavaScript)..." value="Python Operations">
+                    <input type="text" id="topic-custom-input" class="topic-input-box" placeholder="Enter a goal, such as Python operations" maxlength="120">
                     <button id="btn-manifest-dungeon" class="system-btn">
                         <span>🔮</span> MANIFEST
                     </button>
@@ -88,12 +89,14 @@
 
                 <div class="topic-chips-shelf">
                     <span class="topic-chip-label">Quick Pathways:</span>
-                    <button class="topic-chip" data-topic="Python Operations">Python Operations</button>
-                    <button class="topic-chip" data-topic="Python Basics & Functions">Python Basics</button>
                     <button class="topic-chip" data-topic="JavaScript Loops & Arrays">JS Loops</button>
+                    <button class="topic-chip" data-topic="Python Basics & Functions">Python Basics</button>
                     <button class="topic-chip" data-topic="Async/Await & Promises">Async & Promises</button>
+                    <button class="topic-chip" data-topic="React Hooks & State">React Hooks</button>
                     <button class="topic-chip" data-topic="SQL & Database Queries">SQL Basics</button>
+                    <button id="btn-demo-campaign" class="topic-chip">Offline demo</button>
                 </div>
+                <p id="topic-error" class="game-message" role="alert"></p>
 
                 <!-- Overlay when communicating with Ollama -->
                 <div id="topic-status-overlay" class="hidden">
@@ -103,7 +106,19 @@
             </div>
         </section>
 
-        <!-- SCREEN 4: LEVEL MAP SCREEN (Candy-Crush 30 Nodes) -->
+        <section id="plan-screen" class="hidden plan-screen">
+            <div class="plan-card">
+                <h2>Asta's Learning Plan</h2>
+                <p id="plan-summary"></p>
+                <div id="plan-levels" class="plan-levels"></div>
+                <div class="plan-actions">
+                    <button id="btn-plan-back" class="system-btn purple">BACK</button>
+                    <button id="btn-plan-begin" class="system-btn">OPEN LEVEL MAP</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 4: LEVEL MAP SCREEN -->
         <section id="map-screen" class="hidden">
             <header class="map-header-bar">
                 <div class="map-title-group">
@@ -113,8 +128,8 @@
                     <h2 class="map-title-heading">DUNGEON TRIAL PATH</h2>
                     <span id="map-topic-badge">JAVASCRIPT LOOPS</span>
                 </div>
-                <div style="font-family: var(--font-pixel); font-size: 0.85rem; color: var(--neon-cyan);">
-                    30 GATES AWAIT
+                <div id="map-progress" style="font-family: var(--font-pixel); font-size: 0.85rem; color: var(--neon-cyan);">
+                    0 GATES CLEARED
                 </div>
             </header>
 
@@ -122,6 +137,8 @@
                 <div id="map-nodes-container">
                     <!-- 30 Dynamic candy-crush style nodes rendered here -->
                 </div>
+                <div class="map-actions"><button id="btn-map-plan" class="system-btn">VIEW PLAN</button><button id="btn-new-campaign" class="system-btn purple">NEW CAMPAIGN</button></div>
+                <p id="map-error" class="game-message" role="alert"></p>
             </div>
         </section>
 
@@ -166,7 +183,7 @@
                         <!-- Player Hero -->
                         <div id="hero-sprite-container">
                             <!-- Shadow Pet Floating near Hero -->
-                            <div id="battle-shadow-pet">
+                            <div id="battle-shadow-pet" role="button" tabindex="0" aria-label="Open optional hint">
                                 <img src="assets/shadow_pet.png" alt="Shadow Pet" class="pet-img">
                                 <div id="pet-speech-bubble" class="hidden">Hint Unlocked!</div>
                             </div>
@@ -197,6 +214,7 @@
                             </div>
                             <div id="dialogue-prompt-text">The loop keeps running. Fix the update step!</div>
                         </div>
+                        <div id="battle-topic" class="battle-topic"></div>
 
                         <!-- Central Bug Challenge Card -->
                         <div class="bug-challenge-card">
@@ -258,10 +276,15 @@
                 <div class="explanation-body">
                     <div class="explanation-section-title">Verified Solution:</div>
                     <div id="victory-correct-answer" class="correct-answer-display">i++</div>
+                    <div class="explanation-section-title">Corrected Code:</div>
+                    <pre id="victory-corrected-code" class="correct-answer-display"></pre>
+                    <div class="explanation-section-title">Bug Cause:</div>
+                    <div id="victory-bug-cause" class="explanation-text-content"></div>
                     <div class="explanation-section-title">Technical Breakdown:</div>
                     <div id="victory-explanation-text" class="explanation-text-content">
                         Decrementing i-- causes i to continually become negative, producing an infinite loop. Using i++ increments i to 6, satisfying termination.
                     </div>
+                    <div id="victory-concept" class="explanation-text-content"></div>
                 </div>
                 <div class="explanation-footer-actions">
                     <button id="btn-victory-map" class="system-btn" style="font-size: 0.95rem; padding: 8px 16px;">MAP</button>
@@ -280,10 +303,15 @@
                 <div class="explanation-body">
                     <div class="explanation-section-title">Required Bug Fix:</div>
                     <div id="defeat-correct-answer" class="correct-answer-display">i++</div>
+                    <div class="explanation-section-title">Corrected Code:</div>
+                    <pre id="defeat-corrected-code" class="correct-answer-display"></pre>
+                    <div class="explanation-section-title">Bug Cause:</div>
+                    <div id="defeat-bug-cause" class="explanation-text-content"></div>
                     <div class="explanation-section-title">Anomaly Analysis:</div>
                     <div id="defeat-explanation-text" class="explanation-text-content">
                         Two consecutive errors or timeout occurred. Study the code logic to conquer this gate.
                     </div>
+                    <div id="defeat-concept" class="explanation-text-content"></div>
                 </div>
                 <div class="explanation-footer-actions">
                     <button id="btn-defeat-map" class="system-btn" style="font-size: 0.95rem; padding: 8px 16px;">MAP</button>
@@ -331,12 +359,12 @@
                 </div>
                 <div class="settings-form-grid">
                     <div class="settings-field">
-                        <label for="settings-ollama-host">Ollama Server Host:</label>
-                        <input type="text" id="settings-ollama-host" class="settings-input" value="http://localhost:11434">
+                        <label for="settings-ollama-host">AI Server:</label>
+                        <input type="text" id="settings-ollama-host" class="settings-input" value="Configured on local server" disabled>
                     </div>
                     <div class="settings-field">
                         <label for="settings-ollama-model">Ollama Target Model:</label>
-                        <input type="text" id="settings-ollama-model" class="settings-input" value="gemma3:1b">
+                        <input type="text" id="settings-ollama-model" class="settings-input" value="gemma4:e2b">
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <button id="settings-test-btn" class="system-btn" style="font-size: 0.85rem; padding: 6px 14px;">TEST CONNECTION</button>
@@ -344,6 +372,15 @@
                     </div>
 
                     <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+
+                    <div class="settings-field">
+                        <label for="settings-time-limit">Typing time limit (15–120 seconds):</label>
+                        <input type="number" id="settings-time-limit" class="settings-input" min="15" max="120" value="30">
+                    </div>
+                    <div class="settings-field">
+                        <label for="settings-reduced-motion">Reduce animation:</label>
+                        <input type="checkbox" id="settings-reduced-motion">
+                    </div>
 
                     <div class="settings-field">
                         <label for="settings-theme-select">Visual Realm Theme:</label>
@@ -376,7 +413,7 @@
                     "The ultimate final boss has been defeated. Congratulations!"
                 </p>
                 <div style="font-family: var(--font-pixel); font-size: 1rem; color: var(--neon-cyan);">
-                    ALL 30 GATES CONQUERED · S-RANK MONARCH STATUS
+                    <span id="endgame-summary">Campaign complete.</span>
                 </div>
                 <div style="display: flex; gap: 16px; margin-top: 16px;">
                     <button id="btn-endgame-menu" class="system-btn">RETURN TO SANCTUARY</button>
@@ -388,6 +425,6 @@
     </div>
 
     <!-- Application Script Module -->
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

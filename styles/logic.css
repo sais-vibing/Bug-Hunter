@@ -1,0 +1,28 @@
+.plan-screen { position: absolute; inset: 0; z-index: 40; padding: 32px 18px; overflow-y: auto; background: #070b16; }
+.plan-card { max-width: 980px; margin: 0 auto; padding: 24px; background: rgba(8, 18, 35, .94); border: 1px solid #38bdf8; border-radius: 12px; color: #f8fafc; }
+.plan-card h2 { margin: 0 0 12px; color: #67e8f9; }
+.plan-levels { max-height: 65vh; overflow-y: auto; display: grid; gap: 8px; margin: 18px 0; }
+.plan-level { display: grid; gap: 5px; padding: 10px 14px; border: 1px solid #334155; border-radius: 7px; background: #0f172a; font-family: var(--font-code, monospace); }
+.plan-level.medium { border-color: #eab308; }
+.plan-level.hard { border-color: #ef4444; }
+.plan-level span { color: #cbd5e1; line-height: 1.4; }
+.plan-actions, .map-actions { display: flex; gap: 12px; justify-content: center; padding: 14px; flex-wrap: wrap; }
+.game-message { color: #fda4af; min-height: 1.4em; text-align: center; padding: 4px 12px; }
+.battle-topic { color: #a5f3fc; font: 700 .9rem var(--font-code, monospace); padding: 8px 12px; }
+.map-node { cursor: pointer; font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+.map-node:nth-child(4n + 1) { transform: translateX(-85px); }
+.map-node:nth-child(4n + 3) { transform: translateX(85px); }
+.map-node:hover:not(.locked) { transform: scale(1.08); }
+.node-title { max-width: 95%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-node:disabled { cursor: not-allowed; }
+.mini-node { cursor: pointer; color: inherit; background: none; border: 0; padding: 0; }
+.mini-node:disabled { cursor: not-allowed; opacity: .55; }
+#battle-shadow-pet:not(.active) { pointer-events: none; }
+#battle-shadow-pet.active { cursor: pointer; }
+.correct-answer-display { white-space: pre-wrap; overflow-x: auto; }
+.explanation-letter-card { max-height: 92vh; }
+.explanation-body, .settings-form-grid { overflow-y: auto; }
+.explanation-footer-actions { flex-wrap: wrap; }
+.code-snippet-box, .correct-answer-display, .explanation-text-content { user-select: text; -webkit-user-select: text; }
+.reduced-motion *, .reduced-motion *::before, .reduced-motion *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+@media (max-width: 600px) { .plan-card { padding: 14px; } .plan-levels { max-height: 55vh; } .map-node:nth-child(4n + 1) { transform: translateX(-35px); } .map-node:nth-child(4n + 3) { transform: translateX(35px); } }
